@@ -24,7 +24,9 @@ const DeleteConfirmDialog = ({
 }: DeleteConfirmDialogProps) => {
   return (
     <Dialog open={open} onClose={onCancel}>
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle sx={{ color: "black", fontWeight: "bold" }}>
+        {title}
+      </DialogTitle>
 
       <DialogContent>
         <Typography variant="body2" color="text.secondary">

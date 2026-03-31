@@ -9,22 +9,46 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import type { Todo } from "../../types/todo";
-import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import dayjs from "dayjs";
+import { getDueStyle } from "../../utils/dueDate";
+import {
+  getBoardCardBottomSx,
+  getBoardCardContainerSx,
+  getBoardCardDescSx,
+  getBoardCardDueDateSx,
+  getBoardCardSx,
+  getBoardCardTitleSx,
+} from "../../styles/boardCardStyles";
 
 interface BoardCardProps {
   task: Todo;
+
+  presence?: {
+    name: string;
+    color: string;
+  };
+
   onEdit?: () => void;
   onDelete: () => void;
 }
 
-const BoardCard = ({ task, onEdit, onDelete }: BoardCardProps) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: task.id,
   });
 
   const style = {
     transform: CSS.Translate.toString(transform),
+    transition,
   };
 
   return (
@@ -32,33 +56,31 @@ const BoardCard = ({ task, onEdit, onDelete }: BoardCardProps) => {
       ref={setNodeRef}
       style={{
         ...style,
-        position: transform ? "fixed" : "relative",
-        zIndex: transform ? 9999 : 1,
-        width: transform ? "268px" : "auto",
+        opacity: isDragging ? 0 : 1,
+        border: presence ? `2px solid ${presence.color}` : "1px solid #e0e0e0",
       }}
-      sx={{
-        mb: 1.5,
-        boxShadow: "0 1px 4px rgba(0, 0, 0, 0.12)",
-        backgroundColor: "white",
-        cursor: "grab",
-        transition: "all 0.2s ease",
-        "&:hover": {
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-        },
-        borderRadius: "6px",
-        border: "none",
-      }}
+      sx={getBoardCardContainerSx}
     >
-      <CardContent
-        sx={{
-          padding: 2,
-          "&:last-child": { paddingBottom: 2 },
-          backgroundColor: "white",
-        }}
-        {...listeners}
-        {...attributes}
-      >
-        <Typography variant="body1" fontWeight={500} sx={{ color: "#172b4d" }}>
+      <CardContent sx={getBoardCardSx} {...listeners} {...attributes}>
+        {presence && (
+          <Typography
+            variant="caption"
+            sx={{
+              display: "inline-block",
+              mb: 1,
+              px: 1,
+              py: 0.25,
+              borderRadius: 1,
+              color: "white",
+              backgroundColor: presence.color,
+              fontWeight: 600,
+            }}
+          >
+            {presence.name}
+          </Typography>
+        )}
+
+        <Typography variant="body1" fontWeight={500} sx={getBoardCardTitleSx}>
           {task.title}
         </Typography>
 
@@ -67,16 +89,23 @@ const BoardCard = ({ task, onEdit, onDelete }: BoardCardProps) => {
             variant="body2"
             color="text.secondary"
             mt={1}
-            sx={{ color: "#626f86" }}
+            sx={getBoardCardDescSx}
           >
             {task.description}
           </Typography>
         )}
+
+        {task.dueDate &&
+          (() => {
+            return (
+              <Box sx={getBoardCardDueDateSx(getDueStyle(task.dueDate))}>
+                Due {dayjs(task.dueDate).format("MMM D")}
+              </Box>
+            );
+          })()}
       </CardContent>
 
-      <CardContent
-        sx={{ padding: "8px 16px", "&:last-child": { paddingBottom: "8px" } }}
-      >
+      <CardContent sx={getBoardCardBottomSx}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           {(task.status === "todo" || task.status === "in-progress") &&
             onEdit && (

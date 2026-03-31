@@ -7,7 +7,7 @@ import {
   Button,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-
+import { normalizeText } from "../../utils/normalizeSpacing";
 interface RenameColumnModalProps {
   open: boolean;
   currentName: string;
@@ -29,7 +29,7 @@ const RenameColumnModal = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Rename Column</DialogTitle>
+      <DialogTitle sx={{ color: "black" }}>Rename Column</DialogTitle>
 
       <DialogContent>
         <TextField
@@ -38,17 +38,20 @@ const RenameColumnModal = ({
           label="Column Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onBlur={() => setName((prev) => prev.trim())}
           margin="normal"
         />
       </DialogContent>
 
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
+
         <Button
           variant="contained"
           onClick={() => {
-            if (name.trim()) {
-              onSave(name.trim());
+            const normalized = normalizeText(name);
+            if (normalized) {
+              onSave(normalized);
             }
           }}
         >

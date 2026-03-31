@@ -1,114 +1,126 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 import BoardColumn from "../components/board/BoardColumn";
-import { useState } from "react";
-import type { Todo, TodoStatus } from "../types/todo";
-import { DndContext, type DragEndEvent } from "@dnd-kit/core";
-import { DEFAULT_COLUMNS } from "../components/board/BoardColumns";
+import dayjs from "dayjs";
+import { DndContext, DragOverlay, closestCorners } from "@dnd-kit/core";
+import useBoardState from "../hooks/useBoardState";
+import useBoardDragState from "../hooks/useBoardDragState";
+import { getDueStyle } from "../utils/dueDate";
+import {
+  boardColumnsRowSx,
+  boardPageContainerSx,
+  boardPageOuterSx,
+  boardPageTitleSx,
+} from "../styles/boardPageStyles";
+import {
+  getBoardCardContainerSx,
+  getBoardCardDescSx,
+  getBoardCardDueDateSx,
+  getBoardCardSx,
+  getBoardCardTitleSx,
+} from "../styles/boardCardStyles";
+import { createPortal } from "react-dom";
 
 const BoardPage = () => {
-  const [columns, setColumns] = useState(DEFAULT_COLUMNS);
-  const [tasks, setTasks] = useState<Todo[]>([]);
+  const {
+    columns,
+    tasks,
+    presence,
+    renameColumn,
+    addTask,
+    moveTask,
+    deleteTask,
+    editTask,
+  } = useBoardState();
 
-  const renameColumn = (id: TodoStatus, newLabel: string) => {
-    setColumns((cols) =>
-      cols.map((col) => (col.id === id ? { ...col, label: newLabel } : col)),
-    );
-  };
-
-  const addTask = (status: TodoStatus, title: string, description?: string) => {
-    const newTask: Todo = {
-      id: Date.now(),
-      title,
-      description,
-      status,
-    };
-    setTasks((prev) => [...prev, newTask]);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over) return;
-    const taskId = active.id as number;
-    const newStatus = over.id as Todo["status"];
-    moveTask(taskId, newStatus);
-  };
-
-  const deleteTask = (id: number) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
-  };
-
-  const moveTask = (id: number, newStatus: Todo["status"]) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, status: newStatus } : task,
-      ),
-    );
-  };
-
-  const editTask = (id: number, title: string, description?: string) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, title, description } : task,
-      ),
-    );
-  };
+  const {
+    sensors,
+    activeTask,
+    overColumnStatus,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    handleDragCancel,
+  } = useBoardDragState({ tasks, moveTask });
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        padding: { xs: 2, md: 3 },
-        boxSizing: "border-box",
-        overflowX: "auto",
-      }}
-    >
-      <Box
-        sx={{
-          width: "min(1240px, 100%)",
-          minHeight: "calc(100vh - 48px)",
-          margin: "0 auto",
-          padding: { xs: 2, md: 3 },
-          borderRadius: 3,
-          backgroundColor: "rgba(255, 255, 255, 0.14)",
-          boxShadow: "0 12px 32px rgba(0, 0, 0, 0.2)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-          boxSizing: "border-box",
-        }}
-      >
-        <Typography
-          variant="h4"
-          gutterBottom
-          sx={{ color: "white", mb: 4, fontWeight: "bold" }}
-        >
+    <Box sx={boardPageOuterSx}>
+      <Box sx={boardPageContainerSx}>
+        <Typography variant="h4" gutterBottom sx={boardPageTitleSx}>
           Todo Board
         </Typography>
 
-        <Box
-          display="flex"
-          gap={3}
-          justifyContent="center"
-          sx={{
-            overflowX: "auto",
-            pb: 2,
-          }}
-          alignItems="flex-start"
-        >
-          <DndContext onDragEnd={handleDragEnd}>
+        <Box sx={boardColumnsRowSx}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
             {columns.map((col) => (
               <BoardColumn
                 key={col.id}
                 status={col.id}
                 title={col.label}
                 tasks={tasks}
+                presence={presence}
                 onAddTask={addTask}
                 onEditTask={editTask}
-                onMoveTask={moveTask}
                 onDeleteTask={deleteTask}
                 onRename={renameColumn}
+                isDragHover={overColumnStatus === col.id}
               />
             ))}
+
+            {typeof document !== "undefined"
+              ? createPortal(
+                  <DragOverlay zIndex={2000}>
+                    {activeTask ? (
+                      <Card
+                        sx={{
+                          ...getBoardCardContainerSx,
+                          width: 268,
+                          mb: 0,
+                          cursor: "grabbing",
+                        }}
+                      >
+                        <CardContent sx={getBoardCardSx}>
+                          <Typography
+                            variant="body1"
+                            fontWeight={500}
+                            sx={getBoardCardTitleSx}
+                          >
+                            {activeTask.title}
+                          </Typography>
+
+                          {activeTask.description && (
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              mt={1}
+                              sx={getBoardCardDescSx}
+                            >
+                              {activeTask.description}
+                            </Typography>
+                          )}
+
+                          {activeTask.dueDate && (
+                            <Box
+                              sx={getBoardCardDueDateSx(
+                                getDueStyle(activeTask.dueDate),
+                              )}
+                            >
+                              Due {dayjs(activeTask.dueDate).format("MMM D")}
+                            </Box>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ) : null}
+                  </DragOverlay>,
+                  document.body,
+                )
+              : null}
           </DndContext>
         </Box>
       </Box>

@@ -5,4 +5,5 @@ export interface Todo {
   title: string;
   description?: string;
   status: TodoStatus;
+  dueDate?: string;
 }
