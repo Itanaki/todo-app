@@ -7,6 +7,12 @@ import { getTabIdentity } from "../services/collabIdentity";
 import { useTaskRealtimeSync } from "./useTaskRealtimeSync";
 import { useTaskOperations } from "./useTaskOperations";
 
+const DEFAULT_LABEL_BY_STATUS: Record<TodoStatus, string> = {
+  todo: "Todo",
+  "in-progress": "In-Progress",
+  complete: "Completed",
+};
+
 interface UseBoardStateResult {
   columns: BoardColumnConfig[];
   tasks: Todo[];
@@ -71,9 +77,23 @@ const useBoardState = (): UseBoardStateResult => {
   });
 
   const renameColumn = (id: TodoStatus, newLabel: string) => {
-    setColumns((cols) =>
-      cols.map((col) => (col.id === id ? { ...col, label: newLabel } : col)),
-    );
+    const trimmedLabel = newLabel.trim();
+    const resolvedLabel = trimmedLabel || DEFAULT_LABEL_BY_STATUS[id];
+
+    tasksService
+      .renameColumnLabel(id, resolvedLabel)
+      .then((updatedColumn) => {
+        setColumns((cols) =>
+          cols.map((col) =>
+            col.id === updatedColumn.code
+              ? { ...col, label: updatedColumn.label }
+              : col,
+          ),
+        );
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   };
 
   return {

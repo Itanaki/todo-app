@@ -10,10 +10,19 @@ export const createTaskSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "dueDate must be YYYY-MM-DD")
     .optional(),
   status: taskStatusSchema.optional(),
+  columnId: z.coerce.number().int().positive().optional(),
 });
 
 export const taskIdParamsSchema = z.object({
   id: z.coerce.number().int().positive(),
+});
+
+export const taskColumnCodeParamsSchema = z.object({
+  code: taskStatusSchema,
+});
+
+export const renameTaskColumnSchema = z.object({
+  label: z.string().trim().min(1, "label is required").max(100),
 });
 
 export const updateTaskSchema = z.object({
@@ -25,6 +34,7 @@ export const updateTaskSchema = z.object({
     .nullable()
     .optional(),
   status: taskStatusSchema.optional(),
+  columnId: z.coerce.number().int().positive().optional(),
   orderedTaskIds: z.array(z.number().int().positive()).optional(),
   orderedByStatus: z
     .object({
@@ -38,3 +48,4 @@ export const updateTaskSchema = z.object({
 export type TaskStatus = z.infer<typeof taskStatusSchema>;
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+export type RenameTaskColumnInput = z.infer<typeof renameTaskColumnSchema>;

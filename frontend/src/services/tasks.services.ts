@@ -29,6 +29,7 @@ export const tasksService = {
     description?: string;
     dueDate?: string;
     status?: TodoStatus;
+    columnId?: number;
   }): Promise<Todo> {
     const res = await fetch(`${API_BASE_URL}/tasks`, {
       method: "POST",
@@ -53,6 +54,7 @@ export const tasksService = {
       description?: string | null;
       dueDate?: string | null;
       status?: TodoStatus;
+      columnId?: number;
       orderedTaskIds?: number[];
       orderedByStatus?: Record<TodoStatus, number[]>;
     },
@@ -68,6 +70,26 @@ export const tasksService = {
 
     if (!res.ok) {
       throw new Error("Failed to update task");
+    }
+
+    return res.json();
+  },
+
+  async renameColumnLabel(
+    code: TodoStatus,
+    label: string,
+  ): Promise<{ code: TodoStatus; label: string }> {
+    const res = await fetch(`${API_BASE_URL}/task-columns/${code}/label`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...getActorHeaders(),
+      },
+      body: JSON.stringify({ label }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to rename column");
     }
 
     return res.json();

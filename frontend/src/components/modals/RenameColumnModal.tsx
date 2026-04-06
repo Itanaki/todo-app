@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { normalizeText } from "../../utils/normalizeSpacing";
+
 interface RenameColumnModalProps {
   open: boolean;
   currentName: string;
@@ -50,9 +51,7 @@ const RenameColumnModal = ({
           variant="contained"
           onClick={() => {
             const normalized = normalizeText(name);
-            if (normalized) {
-              onSave(normalized);
-            }
+            onSave(normalized);
           }}
         >
           Save

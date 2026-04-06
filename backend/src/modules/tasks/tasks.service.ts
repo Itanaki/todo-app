@@ -3,7 +3,10 @@ import {
   createTaskRecord,
   deleteTaskRecord,
   fetchAllTasks,
+  getTaskColumnByCode,
+  getTaskColumnById,
   getNextSortIndexForStatus,
+  renameTaskColumnLabelByCode,
   reorderByGlobalIds,
   reorderByStatus,
   updateTaskRecord,
@@ -24,11 +27,43 @@ export const listTasks = async () => {
   return fetchAllTasks();
 };
 
+export const renameTaskColumnLabel = async (
+  code: TaskStatus,
+  label: string,
+) => {
+  const updatedCount = await renameTaskColumnLabelByCode(code, label);
+
+  if (updatedCount === 0) {
+    return null;
+  }
+
+  const updatedColumn = await getTaskColumnByCode(code);
+
+  if (!updatedColumn) {
+    return null;
+  }
+
+  return {
+    code,
+    label: updatedColumn.label,
+  };
+};
+
 export const createTask = async (
   payload: CreateTaskInput,
   actor: EventActor,
 ) => {
-  const targetStatus: TaskStatus = payload.status ?? "todo";
+  const targetColumn =
+    payload.columnId !== undefined
+      ? await getTaskColumnById(payload.columnId)
+      : await getTaskColumnByCode(payload.status ?? "todo");
+
+  if (!targetColumn) {
+    throw new Error("Task column not found");
+  }
+
+  const targetStatus = targetColumn.code as TaskStatus;
+
   const nextSortIndex = await getNextSortIndexForStatus(targetStatus);
 
   const createdTask = await createTaskRecord({
@@ -37,6 +72,7 @@ export const createTask = async (
     dueDate: payload.dueDate ?? null,
     status: targetStatus,
     sortIndex: nextSortIndex,
+    columnId: targetColumn.id,
   });
 
   const tasksSnapshot = await fetchAllTasks();
@@ -55,11 +91,25 @@ export const updateTask = async (
   payload: UpdateTaskInput,
   actor: EventActor,
 ) => {
+  const targetColumn =
+    payload.columnId !== undefined
+      ? await getTaskColumnById(payload.columnId)
+      : payload.status !== undefined
+        ? await getTaskColumnByCode(payload.status)
+        : null;
+
+  if (payload.columnId !== undefined || payload.status !== undefined) {
+    if (!targetColumn) {
+      throw new Error("Task column not found");
+    }
+  }
+
   const updatedTask = await updateTaskRecord(id, {
     title: payload.title,
     description: payload.description,
     dueDate: payload.dueDate,
-    status: payload.status,
+    status: targetColumn?.code as TaskStatus | undefined,
+    columnId: targetColumn?.id,
   });
 
   if (!updatedTask) return null;

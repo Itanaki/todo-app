@@ -6,6 +6,9 @@ export type TaskRow = {
   created_at: string;
   status: string | null;
   sort_index: number | null;
+  column_id: number | null;
+  column_code: string | null;
+  column_label: string | null;
 };
 
 export const mapTaskRow = (row: TaskRow) => ({
@@ -16,6 +19,9 @@ export const mapTaskRow = (row: TaskRow) => ({
   createdAt: row.created_at,
   status: row.status ?? "todo",
   sortIndex: row.sort_index ?? 0,
+  columnId: row.column_id,
+  columnCode: row.column_code,
+  columnLabel: row.column_label,
 });
 
 export type TaskDto = ReturnType<typeof mapTaskRow>;
