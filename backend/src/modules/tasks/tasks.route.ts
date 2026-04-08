@@ -13,137 +13,87 @@ import {
   renameTaskColumnLabel,
   updateTask,
 } from "./tasks.service";
-
-const getActorFromHeaders = (headers: Record<string, unknown>) => ({
-  id:
-    typeof headers["x-actor-id"] === "string"
-      ? headers["x-actor-id"]
-      : "unknown",
-  name:
-    typeof headers["x-actor-name"] === "string"
-      ? headers["x-actor-name"]
-      : "Unknown",
-  color:
-    typeof headers["x-actor-color"] === "string"
-      ? headers["x-actor-color"]
-      : "#9e9e9e",
-});
+import { actorMiddleware } from "../middleware/actor.middleware";
+import { validate } from "../middleware/validate.middleware.ts";
 
 export const registerTaskRoutes = async (app: FastifyInstance) => {
   app.get("/tasks", async () => {
     return listTasks();
   });
 
-  app.put("/task-columns/:code/label", async (request, reply) => {
-    const parsedParams = taskColumnCodeParamsSchema.safeParse(request.params);
-    if (!parsedParams.success) {
-      return reply.code(400).send({
-        message: "Invalid task column code",
-        issues: parsedParams.error.issues,
-      });
-    }
+  app.put(
+    "/task-columns/:code/label",
+    {
+      preHandler: validate({
+        params: taskColumnCodeParamsSchema,
+        body: renameTaskColumnSchema,
+      }),
+    },
+    async (request, reply) => {
+      const { code } = request.params;
+      const { label } = request.body;
 
-    const parsedBody = renameTaskColumnSchema.safeParse(request.body);
-    if (!parsedBody.success) {
-      return reply.code(400).send({
-        message: "Invalid request body",
-        issues: parsedBody.error.issues,
-      });
-    }
+      const updatedColumn = await renameTaskColumnLabel(code, label);
 
-    const updatedColumn = await renameTaskColumnLabel(
-      parsedParams.data.code,
-      parsedBody.data.label,
-    );
+      if (!updatedColumn) {
+        return reply.code(404).send({ message: "Task column not found" });
+      }
 
-    if (!updatedColumn) {
-      return reply.code(404).send({ message: "Task column not found" });
-    }
+      return reply.code(200).send(updatedColumn);
+    },
+  );
 
-    return reply.code(200).send(updatedColumn);
-  });
-
-  app.post("/tasks", async (request, reply) => {
-    const parsedBody = createTaskSchema.safeParse(request.body);
-    if (!parsedBody.success) {
-      return reply.code(400).send({
-        message: "Invalid request body",
-        issues: parsedBody.error.issues,
-      });
-    }
-
-    try {
-      const createdTask = await createTask(
-        parsedBody.data,
-        getActorFromHeaders(request.headers as Record<string, unknown>),
-      );
+  app.post(
+    "/tasks",
+    {
+      preHandler: [actorMiddleware, validate({ body: createTaskSchema })],
+    },
+    async (request, reply) => {
+      const createdTask = await createTask(request.body, request.actor);
 
       return reply.code(201).send(createdTask);
-    } catch (error) {
-      return reply.code(400).send({
-        message:
-          error instanceof Error ? error.message : "Failed to create task",
-      });
-    }
-  });
+    },
+  );
 
-  app.put("/tasks/:id", async (request, reply) => {
-    const parsedParams = taskIdParamsSchema.safeParse(request.params);
-    if (!parsedParams.success) {
-      return reply.code(400).send({
-        message: "Invalid task id",
-        issues: parsedParams.error.issues,
-      });
-    }
-
-    const parsedBody = updateTaskSchema.safeParse(request.body);
-    if (!parsedBody.success) {
-      return reply.code(400).send({
-        message: "Invalid request body",
-        issues: parsedBody.error.issues,
-      });
-    }
-
-    let updatedTask;
-
-    try {
-      updatedTask = await updateTask(
-        parsedParams.data.id,
-        parsedBody.data,
-        getActorFromHeaders(request.headers as Record<string, unknown>),
+  app.put(
+    "/tasks/:id",
+    {
+      preHandler: [
+        actorMiddleware,
+        validate({
+          params: taskIdParamsSchema,
+          body: updateTaskSchema,
+        }),
+      ],
+    },
+    async (request, reply) => {
+      const updatedTask = await updateTask(
+        request.params.id,
+        request.body,
+        request.actor,
       );
-    } catch (error) {
-      return reply.code(400).send({
-        message:
-          error instanceof Error ? error.message : "Failed to update task",
-      });
-    }
 
-    if (!updatedTask) {
-      return reply.code(404).send({ message: "Task not found" });
-    }
+      if (!updatedTask) {
+        return reply.code(404).send({ message: "Task not found" });
+      }
 
-    return reply.code(200).send(updatedTask);
-  });
+      return reply.code(200).send(updatedTask);
+    },
+  );
 
-  app.delete("/tasks/:id", async (request, reply) => {
-    const parsedParams = taskIdParamsSchema.safeParse(request.params);
-    if (!parsedParams.success) {
-      return reply.code(400).send({
-        message: "Invalid task id",
-        issues: parsedParams.error.issues,
-      });
-    }
+  app.delete(
+    "/tasks/:id",
+    {
+      preHandler: [actorMiddleware, validate({ params: taskIdParamsSchema })],
+    },
+    async (request, reply) => {
+      const deletedCount = await deleteTask(request.params.id, request.actor);
 
-    const deletedCount = await deleteTask(
-      parsedParams.data.id,
-      getActorFromHeaders(request.headers as Record<string, unknown>),
-    );
+      if (deletedCount === 0) {
+        return reply.code(404).send({ message: "Task not found" });
+      }
 
-    if (deletedCount === 0) {
-      return reply.code(404).send({ message: "Task not found" });
-    }
-
-    return reply.code(204).send();
-  });
+      return reply.code(204).send();
+    },
+  );
 };
