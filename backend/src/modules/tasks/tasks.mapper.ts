@@ -4,7 +4,6 @@ export type TaskRow = {
   description: string | null;
   due_date: string | null;
   created_at: string;
-  status: string | null;
   sort_index: number | null;
   column_id: number | null;
   column_code: string | null;
@@ -17,7 +16,7 @@ export const mapTaskRow = (row: TaskRow) => ({
   description: row.description,
   dueDate: row.due_date,
   createdAt: row.created_at,
-  status: row.status ?? "todo",
+  status: row.column_code ?? "todo",
   sortIndex: row.sort_index ?? 0,
   columnId: row.column_id,
   columnCode: row.column_code,

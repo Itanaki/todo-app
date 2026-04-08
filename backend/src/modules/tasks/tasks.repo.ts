@@ -8,7 +8,6 @@ const baseTaskColumns = [
   "t.description",
   "t.due_date",
   "t.created_at",
-  "t.status",
   "t.sort_index",
   "t.column_id",
   "tc.code as column_code",
@@ -92,10 +91,10 @@ const fetchTaskById = async (id: number): Promise<TaskDto | null> => {
 };
 
 export const getNextSortIndexForStatus = async (
-  status: TaskStatus,
+  columnId: number,
 ): Promise<number> => {
   const maxSortIndexInStatusRow = await db("tasks")
-    .where({ status })
+    .where({ column_id: columnId })
     .max("sort_index as maxSortIndex");
 
   const maxSortIndexValue = Number(
@@ -113,7 +112,6 @@ export const createTaskRecord = async (payload: {
   title: string;
   description: string | null;
   dueDate: string | null;
-  status: TaskStatus;
   sortIndex: number;
   columnId: number;
 }): Promise<TaskDto> => {
@@ -122,7 +120,6 @@ export const createTaskRecord = async (payload: {
       title: payload.title,
       description: payload.description,
       due_date: payload.dueDate,
-      status: payload.status,
       sort_index: payload.sortIndex,
       column_id: payload.columnId,
     })
@@ -145,7 +142,6 @@ export const updateTaskRecord = async (
     title?: string;
     description?: string | null;
     dueDate?: string | null;
-    status?: TaskStatus;
     columnId?: number;
   },
 ): Promise<TaskDto | null> => {
@@ -157,7 +153,6 @@ export const updateTaskRecord = async (
         description: payload.description,
       }),
       ...(payload.dueDate !== undefined && { due_date: payload.dueDate }),
-      ...(payload.status !== undefined && { status: payload.status }),
       ...(payload.columnId !== undefined && { column_id: payload.columnId }),
     })
     .returning("id");
@@ -199,7 +194,6 @@ export const reorderByStatus = async (orderedByStatus: {
 
       for (let index = 0; index < group.ids.length; index += 1) {
         await trx("tasks").where({ id: group.ids[index] }).update({
-          status: group.status,
           column_id: columnId,
           sort_index: index,
         });

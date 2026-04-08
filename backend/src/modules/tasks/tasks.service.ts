@@ -62,15 +62,12 @@ export const createTask = async (
     throw new Error("Task column not found");
   }
 
-  const targetStatus = targetColumn.code as TaskStatus;
-
-  const nextSortIndex = await getNextSortIndexForStatus(targetStatus);
+  const nextSortIndex = await getNextSortIndexForStatus(targetColumn.id);
 
   const createdTask = await createTaskRecord({
     title: payload.title,
     description: payload.description ?? null,
     dueDate: payload.dueDate ?? null,
-    status: targetStatus,
     sortIndex: nextSortIndex,
     columnId: targetColumn.id,
   });
@@ -108,7 +105,6 @@ export const updateTask = async (
     title: payload.title,
     description: payload.description,
     dueDate: payload.dueDate,
-    status: targetColumn?.code as TaskStatus | undefined,
     columnId: targetColumn?.id,
   });
 
