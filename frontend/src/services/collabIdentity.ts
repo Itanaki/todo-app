@@ -4,7 +4,7 @@ type TabIdentity = {
   color: string;
 };
 
-const IDENTITY_STORAGE_KEY = "todo-tab-identity";
+let cachedIdentity: TabIdentity | null = null;
 
 const randomId = () => {
   if (
@@ -40,19 +40,10 @@ const buildIdentity = (): TabIdentity => {
 };
 
 export const getTabIdentity = (): TabIdentity => {
-  const stored = sessionStorage.getItem(IDENTITY_STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored) as TabIdentity;
-      if (parsed.id && parsed.name && parsed.color) {
-        return parsed;
-      }
-    } catch {
-      // fall through and recreate identity
-    }
+  if (cachedIdentity) {
+    return cachedIdentity;
   }
 
-  const identity = buildIdentity();
-  sessionStorage.setItem(IDENTITY_STORAGE_KEY, JSON.stringify(identity));
-  return identity;
+  cachedIdentity = buildIdentity();
+  return cachedIdentity;
 };

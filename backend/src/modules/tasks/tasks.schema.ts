@@ -4,7 +4,7 @@ export const taskStatusSchema = z.enum(["todo", "in-progress", "complete"]);
 
 export const createTaskSchema = z.object({
   title: z.string().trim().min(1, "title is required"),
-  description: z.string().optional(),
+  description: z.string().trim().optional(),
   dueDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "dueDate must be YYYY-MM-DD")
@@ -27,7 +27,7 @@ export const renameTaskColumnSchema = z.object({
 
 export const updateTaskSchema = z.object({
   title: z.string().trim().min(1).optional(),
-  description: z.string().nullable().optional(),
+  description: z.string().trim().nullable().optional(),
   dueDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import { attachActorHook } from "./middleware/actor.middleware";
 import { registerTaskRoutes } from "./modules/tasks/tasks.route";
 import { subscribe, unsubscribe } from "./events/taskEvents";
 const app = Fastify({ logger: true });
@@ -11,7 +12,13 @@ const start = async () => {
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   });
 
+  attachActorHook(app);
+
   app.get("/health", async () => ({ ok: true }));
+
+  app.get("/debug-actor", async (request) => {
+    return { actor: request.actor };
+  });
 
   app.get("/events", (request, reply) => {
     const requestOrigin = request.headers.origin;

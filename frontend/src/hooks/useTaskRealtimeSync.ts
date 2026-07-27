@@ -53,7 +53,7 @@ export const useTaskRealtimeSync = ({
           delete next[taskId];
           return next;
         });
-      }, 3000);
+      }, 8000);
     };
 
     eventSource.onmessage = (event) => {

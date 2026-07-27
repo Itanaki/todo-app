@@ -5,6 +5,7 @@ import type { TodoStatus, Todo } from "../../types/todo";
 import DeleteConfirmDialog from "../modals/DeleteConfirmDialog";
 import EditIcon from "@mui/icons-material/Edit";
 import RenameColumnModal from "../modals/RenameColumnModal";
+import WarningAlert from "../modals/AlertPrompt";
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -60,6 +61,9 @@ const BoardColumn = ({
     filteredTasks,
     setNodeRef,
     isOver,
+    showCompletedDeleteWarning,
+    approveCompletedDelete,
+    cancelCompletedDelete,
     openRenameModal,
     closeRenameModal,
     openAddModal,
@@ -161,6 +165,17 @@ const BoardColumn = ({
           closeTaskModal();
         }}
         onEdit={onEditTask}
+      />
+
+      <WarningAlert
+        open={showCompletedDeleteWarning}
+        message="This task is completed. Delete anyway?"
+        onClose={cancelCompletedDelete}
+        action={
+          <Button color="inherit" size="small" onClick={approveCompletedDelete}>
+            Yes
+          </Button>
+        }
       />
     </>
   );

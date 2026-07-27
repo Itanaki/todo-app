@@ -1,3 +1,4 @@
+import { green } from "@mui/material/colors";
 import type { SxProps, Theme } from "@mui/material/styles";
 
 type DueTone = {
@@ -15,7 +16,6 @@ export const getBoardCardContainerSx: SxProps<Theme> = {
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
   },
   borderRadius: "6px",
-  border: "none",
 };
 
 export const getBoardCardPresenceSx = (presence?: {
@@ -37,6 +37,14 @@ export const getBoardCardTitleSx: SxProps<Theme> = {
 
 export const getBoardCardDescSx: SxProps<Theme> = {
   color: "#626f86",
+
+  display: "-webkit-box",
+  WebkitLineClamp: 2, // number of visible lines
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  position: "relative",
+  cursor: "help",
 };
 
 const boardCardDueDateBaseSx: SxProps<Theme> = {
@@ -48,6 +56,12 @@ const boardCardDueDateBaseSx: SxProps<Theme> = {
   borderRadius: 1,
   fontSize: "0.75rem",
   fontWeight: 600,
+};
+
+export const CompletedCardSx = {
+  ...boardCardDueDateBaseSx,
+  backgroundColor: "green",
+  color: "white",
 };
 
 export const getBoardCardDueDateSx = ({

@@ -5,9 +5,11 @@ import {
   Box,
   IconButton,
   Button,
+  Tooltip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
+import LockIcon from "@mui/icons-material/Lock";
 import type { Todo } from "../../types/todo";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -20,6 +22,7 @@ import {
   getBoardCardDueDateSx,
   getBoardCardSx,
   getBoardCardTitleSx,
+  CompletedCardSx,
 } from "../../styles/boardCardStyles";
 
 interface BoardCardProps {
@@ -35,6 +38,7 @@ interface BoardCardProps {
 }
 
 const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
+  const isComplete = task.status === "complete";
   const {
     attributes,
     listeners,
@@ -44,6 +48,7 @@ const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
     isDragging,
   } = useSortable({
     id: task.id,
+    disabled: isComplete,
   });
 
   const style = {
@@ -57,11 +62,21 @@ const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
       style={{
         ...style,
         opacity: isDragging ? 0 : 1,
+      }}
+      sx={{
+        ...getBoardCardContainerSx,
         border: presence ? `2px solid ${presence.color}` : "1px solid #e0e0e0",
       }}
-      sx={getBoardCardContainerSx}
     >
-      <CardContent sx={getBoardCardSx} {...listeners} {...attributes}>
+      <CardContent
+        sx={{
+          ...getBoardCardSx,
+          cursor: isComplete ? "default" : "grab",
+          opacity: isComplete ? 0.6 : 1,
+        }}
+        {...(!isComplete ? listeners : {})}
+        {...(!isComplete ? attributes : {})}
+      >
         {presence && (
           <Typography
             variant="caption"
@@ -84,25 +99,32 @@ const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
           {task.title}
         </Typography>
 
-        {task.description && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            mt={1}
-            sx={getBoardCardDescSx}
-          >
-            {task.description}
-          </Typography>
+        {task.status === "complete" && (
+          <LockIcon fontSize="small" color="action" />
         )}
 
-        {task.dueDate &&
-          (() => {
-            return (
-              <Box sx={getBoardCardDueDateSx(getDueStyle(task.dueDate))}>
-                Due {dayjs(task.dueDate).format("MMM D")}
-              </Box>
-            );
-          })()}
+        {task.description && (
+          <Tooltip title={task.description} placement="bottom" arrow>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              mt={1}
+              sx={getBoardCardDescSx}
+            >
+              {task.description}
+            </Typography>
+          </Tooltip>
+        )}
+
+        {task.status === "complete" ? (
+          <Box sx={CompletedCardSx}>Complete</Box>
+        ) : (
+          task.dueDate && (
+            <Box sx={getBoardCardDueDateSx(getDueStyle(task.dueDate))}>
+              Due {dayjs(task.dueDate).format("MMM D")}
+            </Box>
+          )
+        )}
       </CardContent>
 
       <CardContent sx={getBoardCardBottomSx}>
