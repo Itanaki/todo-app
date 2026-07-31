@@ -10,7 +10,7 @@ In-memory pub/sub using a Set of listeners. `subscribe()`, `unsubscribe()`, `pub
 
 ## Database (knexfile.ts, db.ts)
 
-MSSQL connection config from env vars. Knex query builder creates a singleton db instance.
+Postgres connection config from env vars or DATABASE_URL. Knex query builder creates a singleton db instance.
 
 ## Modules Structure (backend/src/modules/tasks/)
 

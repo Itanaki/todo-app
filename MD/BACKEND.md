@@ -88,10 +88,10 @@ Files:
 
 Configuration:
 
-- DB client: mssql
+- DB client: pg
 - Connection values from environment variables:
   - DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
-  - DB_ENCRYPT, DB_TRUST_CERT (TLS behavior)
+  - DATABASE_URL as an alternative connection string
 - Same config object is currently used for development and production keys.
 
 Runtime DB instance:

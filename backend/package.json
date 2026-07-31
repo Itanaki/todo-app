@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "migrate:make": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:make",
     "migrate:latest": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:latest",
     "migrate:rollback": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:rollback"
@@ -19,8 +19,8 @@
     "@fastify/cors": "^11.2.0",
     "dotenv": "^17.3.1",
     "fastify": "^5.8.4",
-    "knex": "^3.2.6",
-    "mssql": "^12.2.1",
+    "knex": "^3.3.0",
+    "pg": "^8.22.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
