@@ -7,6 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/src/server.js",
+    "start:render": "npm run migrate:latest && npm start",
     "migrate:make": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:make",
     "migrate:latest": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:latest",
     "migrate:rollback": "node -r ts-node/register ./node_modules/knex/bin/cli.js --knexfile knexfile.ts migrate:rollback"
