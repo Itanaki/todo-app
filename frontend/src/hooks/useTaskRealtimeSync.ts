@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { Todo } from "../types/todo";
 import type { PresenceMap, TaskRealtimeEvent } from "../types/realtime";
+import { API_BASE_URL } from "../services/apiBaseUrl";
 
 type UseTaskRealtimeSyncParams = {
   localActorId: string;
@@ -15,7 +16,7 @@ export const useTaskRealtimeSync = ({
   setPresence,
 }: UseTaskRealtimeSyncParams) => {
   useEffect(() => {
-    const eventSource = new EventSource("http://localhost:4000/events");
+    const eventSource = new EventSource(`${API_BASE_URL}/events`);
 
     const applyOrderedIds = (currentTasks: Todo[], orderedIds: number[]) => {
       const orderMap = new Map<number, number>();
