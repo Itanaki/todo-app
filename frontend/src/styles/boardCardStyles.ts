@@ -1,4 +1,3 @@
-import { green } from "@mui/material/colors";
 import type { SxProps, Theme } from "@mui/material/styles";
 
 type DueTone = {
