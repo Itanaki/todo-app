@@ -16,8 +16,12 @@ import {
 } from "./tasks.service";
 
 export const registerTaskRoutes = async (app: FastifyInstance) => {
-  app.get("/tasks", async () => {
-    return listTasks();
+  app.get("/tasks", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ message: "Unauthorized" });
+    }
+
+    return listTasks(request.user.id);
   });
 
   app.put("/task-columns/:code/label", async (request, reply) => {
@@ -53,6 +57,10 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
     "/tasks",
     { preHandler: taskInputMiddleware },
     async (request, reply) => {
+      if (!request.user) {
+        return reply.code(401).send({ message: "Unauthorized" });
+      }
+
       const parsedBody = createTaskSchema.safeParse(request.body);
       if (!parsedBody.success) {
         return reply.code(400).send({
@@ -62,7 +70,11 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
       }
 
       try {
-        const createdTask = await createTask(parsedBody.data, request.actor);
+        const createdTask = await createTask(
+          parsedBody.data,
+          request.actor,
+          request.user.id,
+        );
 
         return reply.code(201).send(createdTask);
       } catch (error) {
@@ -78,6 +90,10 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
     "/tasks/:id",
     { preHandler: taskInputMiddleware },
     async (request, reply) => {
+      if (!request.user) {
+        return reply.code(401).send({ message: "Unauthorized" });
+      }
+
       const parsedParams = taskIdParamsSchema.safeParse(request.params);
       if (!parsedParams.success) {
         return reply.code(400).send({
@@ -101,6 +117,7 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
           parsedParams.data.id,
           parsedBody.data,
           request.actor,
+          request.user.id,
         );
       } catch (error) {
         return reply.code(400).send({
@@ -118,6 +135,10 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
   );
 
   app.delete("/tasks/:id", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ message: "Unauthorized" });
+    }
+
     const parsedParams = taskIdParamsSchema.safeParse(request.params);
     if (!parsedParams.success) {
       return reply.code(400).send({
@@ -126,7 +147,11 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
       });
     }
 
-    const deletedCount = await deleteTask(parsedParams.data.id, request.actor);
+    const deletedCount = await deleteTask(
+      parsedParams.data.id,
+      request.actor,
+      request.user.id,
+    );
 
     if (deletedCount === 0) {
       return reply.code(404).send({ message: "Task not found" });

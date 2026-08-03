@@ -8,15 +8,24 @@ type UseTaskRealtimeSyncParams = {
   localActorId: string;
   setTasks: Dispatch<SetStateAction<Todo[]>>;
   setPresence: Dispatch<SetStateAction<PresenceMap>>;
+  accessToken?: string | null;
 };
 
 export const useTaskRealtimeSync = ({
   localActorId,
   setTasks,
   setPresence,
+  accessToken,
 }: UseTaskRealtimeSyncParams) => {
   useEffect(() => {
-    const eventSource = new EventSource(`${API_BASE_URL}/events`);
+    if (!accessToken) {
+      return undefined;
+    }
+
+    const eventUrl = new URL(`${API_BASE_URL}/events`);
+    eventUrl.searchParams.set("access_token", accessToken);
+
+    const eventSource = new EventSource(eventUrl.toString());
 
     const applyOrderedIds = (currentTasks: Todo[], orderedIds: number[]) => {
       const orderMap = new Map<number, number>();
@@ -140,5 +149,5 @@ export const useTaskRealtimeSync = ({
     return () => {
       eventSource.close();
     };
-  }, [localActorId, setTasks, setPresence]);
+  }, [accessToken, localActorId, setTasks, setPresence]);
 };

@@ -40,7 +40,7 @@ interface UseBoardStateResult {
   ) => void;
 }
 
-const useBoardState = (): UseBoardStateResult => {
+const useBoardState = (accessToken?: string | null): UseBoardStateResult => {
   const [columns, setColumns] = useState<BoardColumnConfig[]>(DEFAULT_COLUMNS);
   const [tasks, setTasks] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,11 +55,12 @@ const useBoardState = (): UseBoardStateResult => {
     localActorId,
     setTasks,
     setPresence,
+    accessToken,
   });
 
   useEffect(() => {
     tasksService
-      .getTasks()
+      .getTasks(accessToken)
       .then((data) => {
         setTasks(
           data.map((task) => ({
@@ -69,11 +70,12 @@ const useBoardState = (): UseBoardStateResult => {
         );
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [accessToken]);
 
   const { addTask, moveTask, deleteTask, editTask } = useTaskOperations({
     tasks,
     setTasks,
+    accessToken,
   });
 
   const renameColumn = (id: TodoStatus, newLabel: string) => {
@@ -81,7 +83,7 @@ const useBoardState = (): UseBoardStateResult => {
     const resolvedLabel = trimmedLabel || DEFAULT_LABEL_BY_STATUS[id];
 
     tasksService
-      .renameColumnLabel(id, resolvedLabel)
+      .renameColumnLabel(id, resolvedLabel, accessToken)
       .then((updatedColumn) => {
         setColumns((cols) =>
           cols.map((col) =>

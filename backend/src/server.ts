@@ -2,6 +2,7 @@ import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { attachActorHook } from "./middleware/actor.middleware";
+import { attachAuthHook } from "./middleware/auth.middleware";
 import { attachRequestLimiter } from "./middleware/requestLimiter.middleware";
 import { registerTaskRoutes } from "./modules/tasks/tasks.route";
 import { subscribe, unsubscribe } from "./events/taskEvents";
@@ -13,6 +14,7 @@ const start = async () => {
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   });
 
+  attachAuthHook(app);
   attachActorHook(app);
   attachRequestLimiter(app);
 
@@ -24,6 +26,12 @@ const start = async () => {
 
   app.get("/events", (request, reply) => {
     const requestOrigin = request.headers.origin;
+
+    const user = request.user;
+
+    if (!user) {
+      return reply.code(401).send({ message: "Unauthorized" });
+    }
 
     reply.raw.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -44,11 +52,11 @@ const start = async () => {
       reply.raw.write(": keepalive\n\n");
     }, 20000);
 
-    subscribe(send);
+    subscribe(user.id, send);
 
     request.raw.on("close", () => {
       clearInterval(keepAliveTimer);
-      unsubscribe(send);
+      unsubscribe(user.id, send);
     });
   });
 

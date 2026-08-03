@@ -7,11 +7,13 @@ import type { Todo, TodoStatus } from "../types/todo";
 type UseTaskOperationsParams = {
   tasks: Todo[];
   setTasks: Dispatch<SetStateAction<Todo[]>>;
+  accessToken?: string | null;
 };
 
 export const useTaskOperations = ({
   tasks,
   setTasks,
+  accessToken,
 }: UseTaskOperationsParams) => {
   const addTask = useCallback(
     async (
@@ -25,7 +27,7 @@ export const useTaskOperations = ({
         description,
         dueDate,
         status,
-      });
+      }, accessToken);
 
       setTasks((prev) => {
         const exists = prev.some((task) => task.id === created.id);
@@ -38,7 +40,7 @@ export const useTaskOperations = ({
         return [...prev, created];
       });
     },
-    [setTasks],
+    [accessToken, setTasks],
   );
 
   const moveTask = useCallback(
@@ -120,20 +122,20 @@ export const useTaskOperations = ({
           status: nextStatus,
           orderedTaskIds: nextTasks.map((task) => task.id),
           orderedByStatus,
-        });
+        }, accessToken);
       } catch {
         setTasks(previousTasks);
       }
     },
-    [tasks, setTasks],
+    [accessToken, tasks, setTasks],
   );
 
   const deleteTask = useCallback(
     async (id: number) => {
-      await tasksService.deleteTask(id);
+      await tasksService.deleteTask(id, accessToken);
       setTasks((prev) => prev.filter((task) => task.id !== id));
     },
-    [setTasks],
+    [accessToken, setTasks],
   );
 
   const editTask = useCallback(
@@ -147,13 +149,13 @@ export const useTaskOperations = ({
         title,
         description,
         dueDate,
-      });
+      }, accessToken);
 
       setTasks((prev) =>
         prev.map((task) => (task.id === id ? { ...task, ...updated } : task)),
       );
     },
-    [setTasks],
+    [accessToken, setTasks],
   );
 
   return {

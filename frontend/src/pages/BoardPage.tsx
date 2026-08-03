@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Typography } from "@mui/material";
 import BoardColumn from "../components/board/BoardColumn";
 import dayjs from "dayjs";
 import { DndContext, DragOverlay, closestCorners } from "@dnd-kit/core";
@@ -20,7 +20,13 @@ import {
 } from "../styles/boardCardStyles";
 import { createPortal } from "react-dom";
 
-const BoardPage = () => {
+type BoardPageProps = {
+  accessToken?: string | null;
+  userLabel: string;
+  onSignOut: () => void;
+};
+
+const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
   const {
     columns,
     tasks,
@@ -30,7 +36,7 @@ const BoardPage = () => {
     moveTask,
     deleteTask,
     editTask,
-  } = useBoardState();
+  } = useBoardState(accessToken);
 
   const {
     sensors,
@@ -45,9 +51,28 @@ const BoardPage = () => {
   return (
     <Box sx={boardPageOuterSx}>
       <Box sx={boardPageContainerSx}>
-        <Typography variant="h4" gutterBottom sx={boardPageTitleSx}>
-          Todo Board
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <Box>
+            <Typography variant="h4" gutterBottom sx={boardPageTitleSx}>
+              Todo Board
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Signed in as {userLabel}
+            </Typography>
+          </Box>
+
+          <Button variant="outlined" onClick={onSignOut}>
+            Sign out
+          </Button>
+        </Box>
 
         <Box sx={boardColumnsRowSx}>
           <DndContext

@@ -12,9 +12,16 @@ const getActorHeaders = () => {
   };
 };
 
+const getAuthHeaders = (accessToken?: string | null): Record<string, string> =>
+  accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+
 export const tasksService = {
-  async getTasks(): Promise<Todo[]> {
-    const res = await fetch(`${API_BASE_URL}/tasks`);
+  async getTasks(accessToken?: string | null): Promise<Todo[]> {
+    const res = await fetch(`${API_BASE_URL}/tasks`, {
+      headers: {
+        ...getAuthHeaders(accessToken),
+      },
+    });
 
     if (!res.ok) {
       throw new Error("Failed to fetch tasks");
@@ -29,11 +36,12 @@ export const tasksService = {
     dueDate?: string;
     status?: TodoStatus;
     columnId?: number;
-  }): Promise<Todo> {
+  }, accessToken?: string | null): Promise<Todo> {
     const res = await fetch(`${API_BASE_URL}/tasks`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(accessToken),
         ...getActorHeaders(),
       },
       body: JSON.stringify(payload),
@@ -57,11 +65,13 @@ export const tasksService = {
       orderedTaskIds?: number[];
       orderedByStatus?: Record<TodoStatus, number[]>;
     },
+    accessToken?: string | null,
   ): Promise<Todo> {
     const res = await fetch(`${API_BASE_URL}/tasks/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(accessToken),
         ...getActorHeaders(),
       },
       body: JSON.stringify(payload),
@@ -77,11 +87,13 @@ export const tasksService = {
   async renameColumnLabel(
     code: TodoStatus,
     label: string,
+    accessToken?: string | null,
   ): Promise<{ code: TodoStatus; label: string }> {
     const res = await fetch(`${API_BASE_URL}/task-columns/${code}/label`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(accessToken),
         ...getActorHeaders(),
       },
       body: JSON.stringify({ label }),
@@ -94,10 +106,11 @@ export const tasksService = {
     return res.json();
   },
 
-  async deleteTask(id: number): Promise<void> {
+  async deleteTask(id: number, accessToken?: string | null): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/tasks/${id}`, {
       method: "DELETE",
       headers: {
+        ...getAuthHeaders(accessToken),
         ...getActorHeaders(),
       },
     });

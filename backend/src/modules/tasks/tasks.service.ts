@@ -23,8 +23,8 @@ export type EventActor = {
   color: string;
 };
 
-export const listTasks = async () => {
-  return fetchAllTasks();
+export const listTasks = async (ownerId: string) => {
+  return fetchAllTasks(ownerId);
 };
 
 export const renameTaskColumnLabel = async (
@@ -52,6 +52,7 @@ export const renameTaskColumnLabel = async (
 export const createTask = async (
   payload: CreateTaskInput,
   actor: EventActor,
+  ownerId: string,
 ) => {
   const targetColumn =
     payload.columnId !== undefined
@@ -62,9 +63,10 @@ export const createTask = async (
     throw new Error("Task column not found");
   }
 
-  const nextSortIndex = await getNextSortIndexForStatus(targetColumn.id);
+  const nextSortIndex = await getNextSortIndexForStatus(targetColumn.id, ownerId);
 
   const createdTask = await createTaskRecord({
+    ownerId,
     title: payload.title,
     description: payload.description ?? null,
     dueDate: payload.dueDate ?? null,
@@ -72,8 +74,8 @@ export const createTask = async (
     columnId: targetColumn.id,
   });
 
-  const tasksSnapshot = await fetchAllTasks();
-  publish({
+  const tasksSnapshot = await fetchAllTasks(ownerId);
+  publish(ownerId, {
     type: "task-created",
     task: createdTask,
     tasks: tasksSnapshot,
@@ -87,6 +89,7 @@ export const updateTask = async (
   id: number,
   payload: UpdateTaskInput,
   actor: EventActor,
+  ownerId: string,
 ) => {
   const targetColumn =
     payload.columnId !== undefined
@@ -101,7 +104,7 @@ export const updateTask = async (
     }
   }
 
-  const updatedTask = await updateTaskRecord(id, {
+  const updatedTask = await updateTaskRecord(id, ownerId, {
     title: payload.title,
     description: payload.description,
     dueDate: payload.dueDate,
@@ -111,18 +114,18 @@ export const updateTask = async (
   if (!updatedTask) return null;
 
   if (payload.orderedByStatus) {
-    await reorderByStatus(payload.orderedByStatus);
+    await reorderByStatus(ownerId, payload.orderedByStatus);
   } else if (payload.orderedTaskIds && payload.orderedTaskIds.length > 0) {
-    await reorderByGlobalIds(payload.orderedTaskIds);
+    await reorderByGlobalIds(ownerId, payload.orderedTaskIds);
   }
 
-  const tasksSnapshot = await fetchAllTasks();
+  const tasksSnapshot = await fetchAllTasks(ownerId);
   const eventType =
     payload.status !== undefined ? "task-moved" : "task-updated";
   const canonicalTask =
     tasksSnapshot.find((task) => task.id === id) ?? updatedTask;
 
-  publish({
+  publish(ownerId, {
     type: eventType,
     task: canonicalTask,
     tasks: tasksSnapshot,
@@ -133,12 +136,12 @@ export const updateTask = async (
   return canonicalTask;
 };
 
-export const deleteTask = async (id: number, actor: EventActor) => {
-  const deletedCount = await deleteTaskRecord(id);
+export const deleteTask = async (id: number, actor: EventActor, ownerId: string) => {
+  const deletedCount = await deleteTaskRecord(id, ownerId);
   if (deletedCount === 0) return 0;
 
-  const tasksSnapshot = await fetchAllTasks();
-  publish({
+  const tasksSnapshot = await fetchAllTasks(ownerId);
+  publish(ownerId, {
     type: "task-deleted",
     taskId: id,
     tasks: tasksSnapshot,

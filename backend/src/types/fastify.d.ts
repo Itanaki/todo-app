@@ -7,5 +7,9 @@ declare module "fastify" {
       name: string;
       color: string;
     };
+    user: {
+      id: string;
+      email: string | null;
+    } | null;
   }
 }

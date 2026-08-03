@@ -4,6 +4,7 @@ import type { TaskStatus } from "./tasks.schema";
 
 const baseTaskColumns = [
   "t.id",
+  "t.owner_id",
   "t.title",
   "t.description",
   "t.due_date",
@@ -67,10 +68,11 @@ export const renameTaskColumnLabelByCode = async (
   return db("task_columns").where({ code }).update({ label });
 };
 
-export const fetchAllTasks = async (): Promise<TaskDto[]> => {
+export const fetchAllTasks = async (ownerId: string): Promise<TaskDto[]> => {
   const rows = await db("tasks as t")
     .innerJoin("task_columns as tc", "tc.id", "t.column_id")
     .select(...baseTaskColumns)
+    .where("t.owner_id", ownerId)
     .orderBy("tc.sort_index", "asc")
     .orderBy("t.sort_index", "asc")
     .orderBy("t.id", "desc");
@@ -78,11 +80,15 @@ export const fetchAllTasks = async (): Promise<TaskDto[]> => {
   return (rows as TaskRow[]).map(mapTaskRow);
 };
 
-const fetchTaskById = async (id: number): Promise<TaskDto | null> => {
+const fetchTaskById = async (
+  id: number,
+  ownerId: string,
+): Promise<TaskDto | null> => {
   const row = await db("tasks as t")
     .innerJoin("task_columns as tc", "tc.id", "t.column_id")
     .select(...baseTaskColumns)
     .where("t.id", id)
+    .andWhere("t.owner_id", ownerId)
     .first();
 
   if (!row) return null;
@@ -92,9 +98,10 @@ const fetchTaskById = async (id: number): Promise<TaskDto | null> => {
 
 export const getNextSortIndexForStatus = async (
   columnId: number,
+  ownerId: string,
 ): Promise<number> => {
   const maxSortIndexInStatusRow = await db("tasks")
-    .where({ column_id: columnId })
+    .where({ column_id: columnId, owner_id: ownerId })
     .max("sort_index as maxSortIndex");
 
   const maxSortIndexValue = Number(
@@ -109,6 +116,7 @@ export const getNextSortIndexForStatus = async (
 };
 
 export const createTaskRecord = async (payload: {
+  ownerId: string;
   title: string;
   description: string | null;
   dueDate: string | null;
@@ -117,6 +125,7 @@ export const createTaskRecord = async (payload: {
 }): Promise<TaskDto> => {
   const insertedRows = await db("tasks")
     .insert({
+      owner_id: payload.ownerId,
       title: payload.title,
       description: payload.description,
       due_date: payload.dueDate,
@@ -127,7 +136,7 @@ export const createTaskRecord = async (payload: {
 
   const createdTaskId = extractReturnedId(insertedRows[0]);
 
-  const createdTask = await fetchTaskById(createdTaskId);
+  const createdTask = await fetchTaskById(createdTaskId, payload.ownerId);
 
   if (!createdTask) {
     throw new Error("Failed to load created task");
@@ -138,6 +147,7 @@ export const createTaskRecord = async (payload: {
 
 export const updateTaskRecord = async (
   id: number,
+  ownerId: string,
   payload: {
     title?: string;
     description?: string | null;
@@ -146,7 +156,7 @@ export const updateTaskRecord = async (
   },
 ): Promise<TaskDto | null> => {
   const updatedRows = await db("tasks")
-    .where({ id })
+    .where({ id, owner_id: ownerId })
     .update({
       ...(payload.title !== undefined && { title: payload.title }),
       ...(payload.description !== undefined && {
@@ -159,14 +169,17 @@ export const updateTaskRecord = async (
 
   if (updatedRows.length === 0) return null;
 
-  return fetchTaskById(extractReturnedId(updatedRows[0]));
+  return fetchTaskById(extractReturnedId(updatedRows[0]), ownerId);
 };
 
-export const reorderByStatus = async (orderedByStatus: {
-  todo: number[];
-  "in-progress": number[];
-  complete: number[];
-}) => {
+export const reorderByStatus = async (
+  ownerId: string,
+  orderedByStatus: {
+    todo: number[];
+    "in-progress": number[];
+    complete: number[];
+  },
+) => {
   await db.transaction(async (trx) => {
     const statusGroups: Array<{ status: TaskStatus; ids: number[] }> = [
       { status: "todo", ids: orderedByStatus.todo },
@@ -193,7 +206,7 @@ export const reorderByStatus = async (orderedByStatus: {
       }
 
       for (let index = 0; index < group.ids.length; index += 1) {
-        await trx("tasks").where({ id: group.ids[index] }).update({
+        await trx("tasks").where({ id: group.ids[index], owner_id: ownerId }).update({
           column_id: columnId,
           sort_index: index,
         });
@@ -202,16 +215,22 @@ export const reorderByStatus = async (orderedByStatus: {
   });
 };
 
-export const reorderByGlobalIds = async (orderedTaskIds: number[]) => {
+export const reorderByGlobalIds = async (
+  ownerId: string,
+  orderedTaskIds: number[],
+) => {
   await db.transaction(async (trx) => {
     for (let index = 0; index < orderedTaskIds.length; index += 1) {
       await trx("tasks")
-        .where({ id: orderedTaskIds[index] })
+        .where({ id: orderedTaskIds[index], owner_id: ownerId })
         .update({ sort_index: index });
     }
   });
 };
 
-export const deleteTaskRecord = async (id: number): Promise<number> => {
-  return db("tasks").where({ id }).del();
+export const deleteTaskRecord = async (
+  id: number,
+  ownerId: string,
+): Promise<number> => {
+  return db("tasks").where({ id, owner_id: ownerId }).del();
 };
