@@ -9,7 +9,7 @@ type AuthenticatedUser = {
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
-const hasSupabaseAuthConfig =
+export const hasSupabaseAuthConfig =
   typeof supabaseUrl === "string" &&
   supabaseUrl.length > 0 &&
   typeof supabaseAnonKey === "string" &&

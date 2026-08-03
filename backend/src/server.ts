@@ -2,7 +2,7 @@ import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { attachActorHook } from "./middleware/actor.middleware";
-import { attachAuthHook } from "./middleware/auth.middleware";
+import { attachAuthHook, hasSupabaseAuthConfig } from "./middleware/auth.middleware";
 import { attachRequestLimiter } from "./middleware/requestLimiter.middleware";
 import { registerTaskRoutes } from "./modules/tasks/tasks.route";
 import { subscribe, unsubscribe } from "./events/taskEvents";
@@ -18,7 +18,7 @@ const start = async () => {
   attachActorHook(app);
   attachRequestLimiter(app);
 
-  app.get("/health", async () => ({ ok: true }));
+  app.get("/health", async () => ({ ok: true, supabaseConfigured: hasSupabaseAuthConfig }));
 
   app.get("/debug-actor", async (request) => {
     return { actor: request.actor };
