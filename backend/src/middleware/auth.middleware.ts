@@ -16,7 +16,7 @@ export const hasSupabaseAuthConfig =
   supabaseAnonKey.length > 0;
 
 const supabase = hasSupabaseAuthConfig
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl as string, supabaseAnonKey as string)
   : null;
 
 export const attachAuthHook = (app: FastifyInstance) => {
