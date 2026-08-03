@@ -99,9 +99,6 @@ const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
           {task.title}
         </Typography>
 
-        {task.status === "complete" && (
-          <LockIcon fontSize="small" color="action" />
-        )}
 
         {task.description && (
           <Tooltip title={task.description} placement="bottom" arrow>
@@ -117,7 +114,10 @@ const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
         )}
 
         {task.status === "complete" ? (
-          <Box sx={CompletedCardSx}>Complete</Box>
+          <Box sx={{ ...CompletedCardSx, display: "inline-flex", alignItems: "center", gap: 1 }}>
+            <Box component="span">Complete</Box>
+            <LockIcon fontSize="small" sx={{ color: "inherit" }} />
+          </Box>
         ) : (
           task.dueDate && (
             <Box sx={getBoardCardDueDateSx(getDueStyle(task.dueDate))}>

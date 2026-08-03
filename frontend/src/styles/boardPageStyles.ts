@@ -29,7 +29,7 @@ export const boardPageTitleSx: SxProps<Theme> = {
 export const boardColumnsRowSx: SxProps<Theme> = {
   display: "flex",
   gap: 3,
-  justifyContent: "center",
+  justifyContent: { xs: "flex-start", md: "center" },
   alignItems: "flex-start",
   overflowX: "auto",
   pb: 2,
