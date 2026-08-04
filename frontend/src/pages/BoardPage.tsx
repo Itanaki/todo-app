@@ -1,4 +1,7 @@
-import { Box, Button, Card, CardContent, Typography, CircularProgress, TextField, Paper, List, ListItem, ListItemText, ListItemButton, Fab } from "@mui/material";
+import { Box, Button, Card, CardContent, Typography, CircularProgress, TextField, Paper, List, ListItem, ListItemText, ListItemButton, Fab, IconButton, Dialog, DialogContent } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { useState, useRef, useMemo, useEffect } from "react";
 import HelpModal from "../components/common/HelpModal";
 import BoardColumn from "../components/board/BoardColumn";
@@ -45,6 +48,7 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
   } = useBoardState(accessToken);
 
   const [helpOpen, setHelpOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const columnOpeners = useRef<Record<string, (task: any) => void>>({});
@@ -88,6 +92,9 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
     };
   }, []);
 
+  const theme = useTheme();
+  const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+
   const {
     sensors,
     activeTask,
@@ -117,17 +124,76 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
           </Box>
 
           <Box sx={boardPageSearchContainerSx} ref={searchContainerRef}>
+            {!isSmall ? (
+              <>
+                <TextField
+                  fullWidth
+                  size="small"
+                  sx={boardPageTextFieldSearchSx}
+                  placeholder="Search tasks, descriptions..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+
+                {searchResults.length > 0 && (
+                  <Paper sx={{ position: "absolute", left: 0, right: 0, mt: 1, zIndex: 1300 }}>
+                    <List dense disablePadding>
+                      {searchResults.map((res) => (
+                        <ListItem key={res.id} disablePadding>
+                          <ListItemButton
+                            disabled={res.status === "complete"}
+                            onClick={() => {
+                              if (res.status === "complete") return;
+                              const opener = columnOpeners.current[res.status];
+                              if (opener) opener(res);
+                              setSearchQuery("");
+                            }}
+                          >
+                            <ListItemText
+                              primary={res.title}
+                              secondary={
+                                <>
+                                  <div>{res.description}</div>
+                                  <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
+                                    {columns.find((c) => c.id === res.status)?.label ?? res.status}
+                                  </div>
+                                </>
+                              }
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Paper>
+                )}
+              </>
+            ) : (
+              <IconButton aria-label="open search" onClick={() => setMobileSearchOpen(true)}>
+                <SearchIcon />
+              </IconButton>
+            )}
+          </Box>
+
+          <Button variant="contained" color="primary" 
+          onClick={onSignOut}>
+            Sign out
+          </Button>
+        </Box>
+
+        {/* Mobile search dialog */}
+        <Dialog open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} fullWidth>
+          <DialogContent>
             <TextField
+              autoFocus
               fullWidth
               size="small"
-              sx={boardPageTextFieldSearchSx}
               placeholder="Search tasks, descriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
 
             {searchResults.length > 0 && (
-              <Paper sx={{ position: "absolute", left: 0, right: 0, mt: 1, zIndex: 1300 }}>
+              <Paper sx={{ mt: 1 }}>
                 <List dense disablePadding>
                   {searchResults.map((res) => (
                     <ListItem key={res.id} disablePadding>
@@ -138,6 +204,7 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
                           const opener = columnOpeners.current[res.status];
                           if (opener) opener(res);
                           setSearchQuery("");
+                          setMobileSearchOpen(false);
                         }}
                       >
                         <ListItemText
@@ -157,13 +224,8 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
                 </List>
               </Paper>
             )}
-          </Box>
-
-          <Button variant="contained" color="primary" 
-          onClick={onSignOut}>
-            Sign out
-          </Button>
-        </Box>
+          </DialogContent>
+        </Dialog>
 
         <Box sx={boardColumnsRowSx}>
           <DndContext
@@ -260,7 +322,13 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
         size="small"
         aria-label="help"
         onClick={() => setHelpOpen(true)}
-        sx={{ position: "fixed", top: 16, right: 16, zIndex: 1500 }}
+        sx={{
+          position: "fixed",
+          right: 16,
+          top: { xs: "auto", lg: 16 },
+          bottom: { xs: 16, lg: "auto" },
+          zIndex: 1500,
+        }}
       >
         ?
       </Fab>
