@@ -94,6 +94,7 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
 
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+  const isLarge = useMediaQuery(theme.breakpoints.up("lg"));
 
   const {
     sensors,
@@ -315,23 +316,41 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
               document.body,
             )
           : null}
+        {/* Help FAB positioned inside the container (bottom-right) for small/medium screens */}
+        {!isLarge && (
+          <Fab
+            color="primary"
+            size="small"
+            aria-label="help"
+            onClick={() => setHelpOpen(true)}
+            sx={{
+              position: "absolute",
+              right: 16,
+              bottom: 16,
+              zIndex: 1500,
+            }}
+          >
+            ?
+          </Fab>
+        )}
       </Box>
-      {/* Floating Help FAB in top-right corner */}
-      <Fab
-        color="primary"
-        size="small"
-        aria-label="help"
-        onClick={() => setHelpOpen(true)}
-        sx={{
-          position: "fixed",
-          right: 16,
-          top: { xs: "auto", lg: 16 },
-          bottom: { xs: 16, lg: "auto" },
-          zIndex: 1500,
-        }}
-      >
-        ?
-      </Fab>
+      {/* Help FAB fixed at top-right for large desktop screens */}
+      {isLarge && (
+        <Fab
+          color="primary"
+          size="small"
+          aria-label="help"
+          onClick={() => setHelpOpen(true)}
+          sx={{
+            position: "fixed",
+            right: 16,
+            top: 16,
+            zIndex: 1500,
+          }}
+        >
+          ?
+        </Fab>
+      )}
 
       {/* Help modal */}
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} columns={columns} />

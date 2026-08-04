@@ -12,6 +12,7 @@ export const boardPageContainerSx: SxProps<Theme> = {
   minHeight: "calc(100vh - 48px)",
   margin: "0 auto",
   padding: { xs: 2, md: 3 },
+  position: "relative",
   borderRadius: 3,
   backgroundColor: "rgba(255, 255, 255, 0.25)",
   boxShadow: "0 12px 32px rgba(0, 0, 0, 0.2)",
