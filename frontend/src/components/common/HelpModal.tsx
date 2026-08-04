@@ -40,10 +40,12 @@ type HelpModalProps = {
 };
 
 export default function HelpModal({ open, onClose, columns }: HelpModalProps) {
-  const [colorsOpen, setColorsOpen] = useState(false);
   const [tab, setTab] = useState(0);
 
-  const handleTabChange = (ev: React.SyntheticEvent, value: number) => setTab(value);
+  const handleTabChange = (ev: React.SyntheticEvent, value: number) => {
+    void ev;
+    setTab(value);
+  };
 
   return (
     <Dialog

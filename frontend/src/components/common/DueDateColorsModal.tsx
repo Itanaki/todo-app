@@ -1,4 +1,3 @@
-import React from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Stack } from "@mui/material";
 import { getDueStyle } from "../../utils/dueDate";
 
