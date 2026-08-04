@@ -25,6 +25,10 @@ interface Props {
   status: TodoStatus;
   tasks: Todo[];
   presence: Record<number, { name: string; color: string }>;
+  registerOpenEdit?: (
+    status: TodoStatus,
+    openFn: (task: Todo) => void,
+  ) => void;
   isDragHover?: boolean;
   onAddTask?: (
     status: TodoStatus,
@@ -47,6 +51,7 @@ const BoardColumn = ({
   status,
   tasks,
   presence,
+  registerOpenEdit,
   isDragHover,
   onAddTask,
   onEditTask,
@@ -73,6 +78,11 @@ const BoardColumn = ({
     cancelDelete,
     confirmDelete,
   } = useBoardColumnUiState({ status, tasks });
+  
+  // register the openEditModal so parent (BoardPage) can open this column's modal
+  if (registerOpenEdit) {
+    registerOpenEdit(status, openEditModal);
+  }
   const sortableIds = filteredTasks.map((task) => task.id);
   const showHover = isOver || Boolean(isDragHover);
   return (

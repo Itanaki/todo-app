@@ -1,4 +1,5 @@
-import { Box, Button, Card, CardContent, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Typography, CircularProgress, TextField, Paper, List, ListItem, ListItemText, ListItemButton } from "@mui/material";
+import { useState, useRef, useMemo, useEffect } from "react";
 import BoardColumn from "../components/board/BoardColumn";
 import dayjs from "dayjs";
 import { DndContext, DragOverlay, closestCorners } from "@dnd-kit/core";
@@ -10,6 +11,8 @@ import {
   boardPageContainerSx,
   boardPageOuterSx,
   boardPageTitleSx,
+  loadingOverlaySx,
+  loadingOverlayContentSx,
 } from "../styles/boardPageStyles";
 import {
   getBoardCardContainerSx,
@@ -36,7 +39,50 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
     moveTask,
     deleteTask,
     editTask,
+    loading,
   } = useBoardState(accessToken);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const columnOpeners = useRef<Record<string, (task: any) => void>>({});
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return tasks
+      .filter((t) => {
+        const title = (t.title ?? "").toLowerCase();
+        const desc = (t.description ?? "").toLowerCase();
+        return title.includes(q) || desc.includes(q);
+      })
+      .slice(0, 10);
+  }, [tasks, searchQuery]);
+
+  useEffect(() => {
+    const onDocMouseDown = (ev: MouseEvent) => {
+      const node = searchContainerRef.current;
+      if (!node) return;
+      const target = ev.target as Node | null;
+      if (target && !node.contains(target)) {
+        setSearchQuery("");
+      }
+    };
+
+    const onDocKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        setSearchQuery("");
+        const input = searchContainerRef.current?.querySelector("input") as HTMLInputElement | null;
+        input?.blur();
+      }
+    };
+
+    document.addEventListener("mousedown", onDocMouseDown);
+    document.addEventListener("keydown", onDocKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onDocMouseDown);
+      document.removeEventListener("keydown", onDocKeyDown);
+    };
+  }, []);
 
   const {
     sensors,
@@ -69,6 +115,48 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
             </Typography>
           </Box>
 
+          <Box sx={{ flex: 1, mx: 3, position: "relative" }} ref={searchContainerRef}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search tasks, descriptions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+
+            {searchResults.length > 0 && (
+              <Paper sx={{ position: "absolute", left: 0, right: 0, mt: 1, zIndex: 1300 }}>
+                <List dense disablePadding>
+                  {searchResults.map((res) => (
+                    <ListItem key={res.id} disablePadding>
+                      <ListItemButton
+                        disabled={res.status === "complete"}
+                        onClick={() => {
+                          if (res.status === "complete") return;
+                          const opener = columnOpeners.current[res.status];
+                          if (opener) opener(res);
+                          setSearchQuery("");
+                        }}
+                      >
+                        <ListItemText
+                          primary={res.title}
+                          secondary={
+                            <>
+                              <div>{res.description}</div>
+                              <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
+                                {columns.find((c) => c.id === res.status)?.label ?? res.status}
+                              </div>
+                            </>
+                          }
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
+          </Box>
+
           <Button variant="outlined" onClick={onSignOut}>
             Sign out
           </Button>
@@ -90,6 +178,9 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
                 title={col.label}
                 tasks={tasks}
                 presence={presence}
+                registerOpenEdit={(status, fn) => {
+                  columnOpeners.current[status] = fn;
+                }}
                 onAddTask={addTask}
                 onEditTask={editTask}
                 onDeleteTask={deleteTask}
@@ -148,6 +239,17 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
               : null}
           </DndContext>
         </Box>
+        {loading && typeof document !== "undefined"
+          ? createPortal(
+              <Box role="status" aria-busy={true} sx={loadingOverlaySx}>
+                <Box sx={loadingOverlayContentSx}>
+                  <CircularProgress color="inherit" />
+                  <Typography variant="h6">Loading tasks…</Typography>
+                </Box>
+              </Box>,
+              document.body,
+            )
+          : null}
       </Box>
     </Box>
   );

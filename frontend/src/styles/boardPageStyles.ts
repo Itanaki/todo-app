@@ -34,3 +34,21 @@ export const boardColumnsRowSx: SxProps<Theme> = {
   overflowX: "auto",
   pb: 2,
 };
+
+export const loadingOverlaySx: SxProps<Theme> = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 3000,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "rgba(0,0,0,0.45)",
+};
+
+export const loadingOverlayContentSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 2,
+  color: "common.white",
+};

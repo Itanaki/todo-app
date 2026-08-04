@@ -33,6 +33,7 @@ interface BoardCardProps {
     color: string;
   };
 
+  searchQuery?: string;
   onEdit?: () => void;
   onDelete: () => void;
 }
@@ -76,6 +77,9 @@ const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
         }}
         {...(!isComplete ? listeners : {})}
         {...(!isComplete ? attributes : {})}
+        onClick={() => {
+          if (!isComplete && onEdit) onEdit();
+        }}
       >
         {presence && (
           <Typography
@@ -134,7 +138,10 @@ const BoardCard = ({ task, presence, onEdit, onDelete }: BoardCardProps) => {
               <Button
                 size="small"
                 startIcon={<EditIcon />}
-                onClick={onEdit}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
                 sx={{ textTransform: "none", fontSize: "0.875rem" }}
               >
                 Edit
