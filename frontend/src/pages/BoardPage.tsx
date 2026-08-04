@@ -1,5 +1,6 @@
-import { Box, Button, Card, CardContent, Typography, CircularProgress, TextField, Paper, List, ListItem, ListItemText, ListItemButton } from "@mui/material";
+import { Box, Button, Card, CardContent, Typography, CircularProgress, TextField, Paper, List, ListItem, ListItemText, ListItemButton, Fab } from "@mui/material";
 import { useState, useRef, useMemo, useEffect } from "react";
+import HelpModal from "../components/common/HelpModal";
 import BoardColumn from "../components/board/BoardColumn";
 import dayjs from "dayjs";
 import { DndContext, DragOverlay, closestCorners } from "@dnd-kit/core";
@@ -42,6 +43,8 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
     editTask,
     loading,
   } = useBoardState(accessToken);
+
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const columnOpeners = useRef<Record<string, (task: any) => void>>({});
@@ -251,6 +254,19 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
             )
           : null}
       </Box>
+      {/* Floating Help FAB in top-right corner */}
+      <Fab
+        color="primary"
+        size="small"
+        aria-label="help"
+        onClick={() => setHelpOpen(true)}
+        sx={{ position: "fixed", top: 16, right: 16, zIndex: 1500 }}
+      >
+        ?
+      </Fab>
+
+      {/* Help modal */}
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} columns={columns} />
     </Box>
   );
 };
