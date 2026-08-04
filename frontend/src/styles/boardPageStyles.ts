@@ -13,17 +13,11 @@ export const boardPageContainerSx: SxProps<Theme> = {
   margin: "0 auto",
   padding: { xs: 2, md: 3 },
   borderRadius: 3,
-  backgroundColor: "rgba(255, 255, 255, 0.14)",
+  backgroundColor: "rgba(255, 255, 255, 0.25)",
   boxShadow: "0 12px 32px rgba(0, 0, 0, 0.2)",
-  backdropFilter: "blur(6px)",
+  backdropFilter: "blur(3px)",
   WebkitBackdropFilter: "blur(6px)",
   boxSizing: "border-box",
-};
-
-export const boardPageTitleSx: SxProps<Theme> = {
-  color: "white",
-  mb: 4,
-  fontWeight: "bold",
 };
 
 export const boardColumnsRowSx: SxProps<Theme> = {
@@ -51,4 +45,25 @@ export const loadingOverlayContentSx: SxProps<Theme> = {
   alignItems: "center",
   gap: 2,
   color: "common.white",
+};
+
+export const boardPageSearchContainerSx: SxProps<Theme> = {
+  flex: 1,
+  mx: 3,
+  position: "relative",
+  backgroundColor: "white",
+  borderRadius: "10px",
+  
+};
+
+export const boardPageTextFieldSearchSx: SxProps<Theme> = {
+  "& .MuiOutlinedInput-notchedOutline": {
+    border: "none",
+  },
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    border: "none",
+  },
+  "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
+    border: "none",
+  },
 };

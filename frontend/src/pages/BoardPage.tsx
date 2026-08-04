@@ -10,9 +10,10 @@ import {
   boardColumnsRowSx,
   boardPageContainerSx,
   boardPageOuterSx,
-  boardPageTitleSx,
   loadingOverlaySx,
   loadingOverlayContentSx,
+  boardPageSearchContainerSx,
+  boardPageTextFieldSearchSx
 } from "../styles/boardPageStyles";
 import {
   getBoardCardContainerSx,
@@ -107,18 +108,16 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
           }}
         >
           <Box>
-            <Typography variant="h4" gutterBottom sx={boardPageTitleSx}>
-              Todo Board
-            </Typography>
             <Typography variant="body2" color="text.secondary">
-              Signed in as {userLabel}
+              Signed in as <strong>{userLabel}</strong>
             </Typography>
           </Box>
 
-          <Box sx={{ flex: 1, mx: 3, position: "relative" }} ref={searchContainerRef}>
+          <Box sx={boardPageSearchContainerSx} ref={searchContainerRef}>
             <TextField
               fullWidth
               size="small"
+              sx={boardPageTextFieldSearchSx}
               placeholder="Search tasks, descriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -157,7 +156,8 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
             )}
           </Box>
 
-          <Button variant="outlined" onClick={onSignOut}>
+          <Button variant="contained" color="primary" 
+          onClick={onSignOut}>
             Sign out
           </Button>
         </Box>
