@@ -170,10 +170,10 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
                               primary={res.title}
                               secondary={
                                 <>
-                                  <div>{res.description}</div>
-                                  <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
+                                    <span style={{ display: "block" }}>{res.description}</span>
+                                    <span style={{ display: "block", fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
                                     {columns.find((c) => c.id === res.status)?.label ?? res.status}
-                                  </div>
+                                    </span>
                                 </>
                               }
                             />
@@ -233,10 +233,10 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
                           primary={res.title}
                           secondary={
                             <>
-                              <div>{res.description}</div>
-                              <div style={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
+                              <span style={{ display: "block" }}>{res.description}</span>
+                              <span style={{ display: "block", fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
                                 {columns.find((c) => c.id === res.status)?.label ?? res.status}
-                              </div>
+                              </span>
                             </>
                           }
                         />
