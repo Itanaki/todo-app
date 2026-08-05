@@ -53,6 +53,19 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const columnOpeners = useRef<Record<string, (task: any) => void>>({});
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  // Holds a task to open after the mobile search Dialog has fully exited
+  const pendingMobileTask = useRef<Parameters<typeof columnOpeners.current[string]>[0] | null>(null);
+  // Mirrors mobileSearchOpen for use in native event handlers without stale closure
+  const mobileSearchOpenRef = useRef(false);
+  useEffect(() => { mobileSearchOpenRef.current = mobileSearchOpen; }, [mobileSearchOpen]);
+
+  const handleMobileSearchExited = () => {
+    const task = pendingMobileTask.current;
+    if (!task) return;
+    pendingMobileTask.current = null;
+    const opener = columnOpeners.current[task.status];
+    if (opener) opener(task);
+  };
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -68,6 +81,9 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
 
   useEffect(() => {
     const onDocMouseDown = (ev: MouseEvent) => {
+      // Skip when mobile dialog is open — the dialog Portal is outside searchContainerRef
+      // and would incorrectly clear the query before the ListItemButton click fires
+      if (mobileSearchOpenRef.current) return;
       const node = searchContainerRef.current;
       if (!node) return;
       const target = ev.target as Node | null;
@@ -168,8 +184,14 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
                   </Paper>
                 )}
               </>
-            ) : (
-              <IconButton aria-label="open search" onClick={() => setMobileSearchOpen(true)}>
+              ) : (
+              <IconButton
+                aria-label="open search"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setMobileSearchOpen(true);
+                }}
+              >
                 <SearchIcon />
               </IconButton>
             )}
@@ -182,7 +204,7 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
         </Box>
 
         {/* Mobile search dialog */}
-        <Dialog open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} fullWidth>
+        <Dialog open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} fullWidth TransitionProps={{ onExited: handleMobileSearchExited }}>
           <DialogContent>
             <TextField
               autoFocus
@@ -202,8 +224,7 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
                         disabled={res.status === "complete"}
                         onClick={() => {
                           if (res.status === "complete") return;
-                          const opener = columnOpeners.current[res.status];
-                          if (opener) opener(res);
+                          pendingMobileTask.current = res;
                           setSearchQuery("");
                           setMobileSearchOpen(false);
                         }}
@@ -322,7 +343,10 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
             color="primary"
             size="small"
             aria-label="help"
-            onClick={() => setHelpOpen(true)}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              setHelpOpen(true);
+            }}
             sx={{
               position: "absolute",
               right: 16,
@@ -340,7 +364,10 @@ const BoardPage = ({ accessToken, userLabel, onSignOut }: BoardPageProps) => {
           color="primary"
           size="small"
           aria-label="help"
-          onClick={() => setHelpOpen(true)}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            setHelpOpen(true);
+          }}
           sx={{
             position: "fixed",
             right: 16,
