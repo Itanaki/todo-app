@@ -12,7 +12,7 @@ const baseTaskColumns = [
   "t.sort_index",
   "t.column_id",
   "tc.code as column_code",
-  "tc.label as column_label",
+  // Note: column_label selection is built per-query to allow owner-specific overrides
 ] as const;
 
 const baseTaskColumnColumns = ["id", "code", "label", "sort_index"] as const;
@@ -64,14 +64,31 @@ export const getTaskColumnById = async (
 export const renameTaskColumnLabelByCode = async (
   code: TaskStatus,
   label: string,
+  ownerId?: string,
 ): Promise<number> => {
+  if (ownerId) {
+    // upsert per-user override
+    await db("user_task_column_labels")
+      .insert({ owner_id: ownerId, column_code: code, label })
+      .onConflict(["owner_id", "column_code"]) // merge on composite PK
+      .merge();
+
+    return 1;
+  }
+
   return db("task_columns").where({ code }).update({ label });
 };
 
 export const fetchAllTasks = async (ownerId: string): Promise<TaskDto[]> => {
   const rows = await db("tasks as t")
     .innerJoin("task_columns as tc", "tc.id", "t.column_id")
-    .select(...baseTaskColumns)
+    .select(
+      ...baseTaskColumns,
+      db.raw(
+        "coalesce((select label from user_task_column_labels u where u.owner_id = ? and u.column_code = tc.code), tc.label) as column_label",
+        [ownerId],
+      ),
+    )
     .where("t.owner_id", ownerId)
     .orderBy("tc.sort_index", "asc")
     .orderBy("t.sort_index", "asc")
@@ -86,7 +103,13 @@ const fetchTaskById = async (
 ): Promise<TaskDto | null> => {
   const row = await db("tasks as t")
     .innerJoin("task_columns as tc", "tc.id", "t.column_id")
-    .select(...baseTaskColumns)
+    .select(
+      ...baseTaskColumns,
+      db.raw(
+        "coalesce((select label from user_task_column_labels u where u.owner_id = ? and u.column_code = tc.code), tc.label) as column_label",
+        [ownerId],
+      ),
+    )
     .where("t.id", id)
     .andWhere("t.owner_id", ownerId)
     .first();

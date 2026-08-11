@@ -30,11 +30,21 @@ export const listTasks = async (ownerId: string) => {
 export const renameTaskColumnLabel = async (
   code: TaskStatus,
   label: string,
+  ownerId?: string,
 ) => {
-  const updatedCount = await renameTaskColumnLabelByCode(code, label);
+  const updatedCount = await renameTaskColumnLabelByCode(code, label, ownerId);
 
   if (updatedCount === 0) {
     return null;
+  }
+
+  // For per-user updates we can return the label requested (override),
+  // for global updates fall back to fetching the canonical column.
+  if (ownerId) {
+    return {
+      code,
+      label,
+    };
   }
 
   const updatedColumn = await getTaskColumnByCode(code);

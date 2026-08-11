@@ -68,6 +68,14 @@ const useBoardState = (accessToken?: string | null): UseBoardStateResult => {
             status: task.status ?? "todo",
           })),
         );
+
+        // Initialize column labels from fetched tasks (per-user overrides if present)
+        setColumns((cols) =>
+          cols.map((col) => {
+            const found = data.find((t) => t.columnCode === col.id && t.columnLabel);
+            return found ? { ...col, label: found.columnLabel ?? col.label } : col;
+          }),
+        );
       })
       .finally(() => setLoading(false));
   }, [accessToken]);

@@ -25,6 +25,9 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
   });
 
   app.put("/task-columns/:code/label", async (request, reply) => {
+    if (!request.user) {
+      return reply.code(401).send({ message: "Unauthorized" });
+    }
     const parsedParams = taskColumnCodeParamsSchema.safeParse(request.params);
     if (!parsedParams.success) {
       return reply.code(400).send({
@@ -44,6 +47,7 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
     const updatedColumn = await renameTaskColumnLabel(
       parsedParams.data.code,
       parsedBody.data.label,
+      request.user.id,
     );
 
     if (!updatedColumn) {
