@@ -11,6 +11,7 @@ import {
   createTask,
   deleteTask,
   listTasks,
+  listTaskColumns,
   renameTaskColumnLabel,
   updateTask,
 } from "./tasks.service";
