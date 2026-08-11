@@ -59,23 +59,33 @@ const useBoardState = (accessToken?: string | null): UseBoardStateResult => {
   });
 
   useEffect(() => {
+    // Fetch tasks and try to fetch server-provided column definitions.
+    // If the backend doesn't expose /task-columns (404), fall back to
+    // deriving labels from the tasks payload (legacy behavior).
     tasksService
       .getTasks(accessToken)
-      .then((data) => {
+      .then(async (tasksData) => {
         setTasks(
-          data.map((task) => ({
+          tasksData.map((task) => ({
             ...task,
             status: task.status ?? "todo",
           })),
         );
 
-        // Initialize column labels from fetched tasks (per-user overrides if present)
-        setColumns((cols) =>
-          cols.map((col) => {
-            const found = data.find((t) => t.columnCode === col.id && t.columnLabel);
-            return found ? { ...col, label: found.columnLabel ?? col.label } : col;
-          }),
-        );
+        try {
+          const columnsData = await tasksService.getColumns(accessToken);
+          setColumns(
+            columnsData.map((c) => ({ id: c.code as any, label: c.label, sortIndex: c.sort_index })),
+          );
+        } catch (err) {
+          // fallback: build columns from tasks (legacy behavior)
+          setColumns((cols) =>
+            cols.map((col) => {
+              const found = tasksData.find((t) => t.columnCode === col.id && t.columnLabel);
+              return found ? { ...col, label: found.columnLabel ?? col.label } : col;
+            }),
+          );
+        }
       })
       .finally(() => setLoading(false));
   }, [accessToken]);

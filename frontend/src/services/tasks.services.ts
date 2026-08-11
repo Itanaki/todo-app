@@ -30,6 +30,20 @@ export const tasksService = {
     return res.json();
   },
 
+  async getColumns(accessToken?: string | null): Promise<Array<{ id: number; code: TodoStatus; label: string; sort_index: number }>> {
+    const res = await fetch(`${API_BASE_URL}/task-columns`, {
+      headers: {
+        ...getAuthHeaders(accessToken),
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch task columns");
+    }
+
+    return res.json();
+  },
+
   async createTask(payload: {
     title: string;
     description?: string;

@@ -57,6 +57,14 @@ export const registerTaskRoutes = async (app: FastifyInstance) => {
     return reply.code(200).send(updatedColumn);
   });
 
+  app.get("/task-columns", async (request, reply) => {
+    const viewerId = request.user?.id ?? request.actor.id;
+
+    const columns = await listTaskColumns(viewerId);
+
+    return reply.code(200).send(columns);
+  });
+
   app.post(
     "/tasks",
     { preHandler: taskInputMiddleware },

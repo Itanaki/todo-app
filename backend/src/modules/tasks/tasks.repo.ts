@@ -97,6 +97,22 @@ export const fetchAllTasks = async (ownerId: string): Promise<TaskDto[]> => {
   return (rows as TaskRow[]).map(mapTaskRow);
 };
 
+export const fetchTaskColumns = async (viewerId: string | null) => {
+  const rows = await db("task_columns as tc")
+    .select(
+      "tc.id",
+      "tc.code",
+      "tc.sort_index",
+      db.raw(
+        "coalesce((select label from user_task_column_labels u where u.owner_id = ? and u.column_code = tc.code), tc.label) as label",
+        [viewerId],
+      ),
+    )
+    .orderBy("tc.sort_index", "asc");
+
+  return rows as Array<{ id: number; code: string; sort_index: number; label: string }>; 
+};
+
 const fetchTaskById = async (
   id: number,
   ownerId: string,

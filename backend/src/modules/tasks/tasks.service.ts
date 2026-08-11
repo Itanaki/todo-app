@@ -10,6 +10,7 @@ import {
   reorderByGlobalIds,
   reorderByStatus,
   updateTaskRecord,
+  fetchTaskColumns,
 } from "./tasks.repo";
 import type {
   CreateTaskInput,
@@ -159,4 +160,8 @@ export const deleteTask = async (id: number, actor: EventActor, ownerId: string)
   });
 
   return deletedCount;
+};
+
+export const listTaskColumns = async (viewerId?: string | null) => {
+  return fetchTaskColumns(viewerId ?? null);
 };
